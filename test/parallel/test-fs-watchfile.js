@@ -63,3 +63,23 @@ fs.watchFile(enoentFile, {interval: 0}, common.mustCall(function(curr, prev) {
     fs.unwatchFile(enoentFile);
   }
 }, 2));
+
+if (common.isLinux || common.isOSX) {
+  const dir = common.tmpDir + '/watch';
+  const opts = { persistent: false };
+  const stayAlive = setInterval(() => 0, 1000);
+
+  fs.mkdir(dir, (err) => {
+    assert(!err);
+
+    fs.watch(dir, opts, common.mustCall((eventType, filename) => {
+      assert(filename);
+      clearInterval(stayAlive);
+      common.refreshTmpDir();
+    }));
+
+    fs.writeFile(`${dir}/foo.txt`, 'foo', common.mustCall((err) => {
+      assert(!err);
+    }));
+  });
+}
